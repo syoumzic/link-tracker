@@ -1,0 +1,44 @@
+stages:
+  - build-and-test
+
+mr-block:
+  stage: build-and-test
+  interruptible: true
+  allow_failure: false
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+      changes:
+        - .gitlab-ci.yml
+        - .scalafix.conf
+    - when: never
+  script:
+    - echo "Please don't change service files"
+    - exit 1
+
+mr-build:
+  image: sbtscala/scala-sbt:eclipse-temurin-alpine-21.0.8_9_1.11.6_2.13.16
+  stage: build-and-test
+  interruptible: true
+  allow_failure: false
+  needs:
+    - job: mr-block
+      optional: true
+      artifacts: false
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - when: never
+  script:
+    - sbt "scalafmtCheckAll; scalafmtSbtCheck; scalafixEnable; scalafixAll --check; compile; test"
+
+
+master-build:
+  image: sbtscala/scala-sbt:eclipse-temurin-alpine-21.0.8_9_1.11.6_2.13.16
+  stage: build-and-test
+  interruptible: true
+  allow_failure: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: never
+  script:
+    - sbt "scalafmtCheckAll; scalafmtSbtCheck; scalafixEnable; scalafixAll --check; compile"
