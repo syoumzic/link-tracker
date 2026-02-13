@@ -8,6 +8,6 @@ ThisBuild / scalafixDependencies += "org.typelevel"       %% "typelevel-scalafix
 ThisBuild / scalafixDependencies += "com.github.vovapolu" %% "scaluzzi"           % "0.1.23"
 ThisBuild / semanticdbEnabled                             := true
 
-val bot = project.settings(libraryDependencies ++= Dependencies.allDeps)
+val bot      = project.settings(libraryDependencies ++= Dependencies.allDeps)
 val scrapper = project.settings(libraryDependencies ++= Dependencies.allDeps)
-val ai = project.settings(name := "ai-agent", libraryDependencies ++= Dependencies.allDeps)
+val ai       = project.settings(name := "ai-agent", libraryDependencies ++= Dependencies.allDeps)

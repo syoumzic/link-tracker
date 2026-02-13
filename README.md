@@ -1,4 +1,4 @@
-![Build](https://github.com/central-university-dev/backend-academy-2025-spring-scala-template/actions/workflows/ci.yml/badge.svg)
+![Build](https://gitlab.education.tbank.ru/backend-academy-scala-2025/homeworks/link-tracker/badges/master/pipeline.svg)
 
 # Link Tracker
 
