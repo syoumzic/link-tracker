@@ -1,0 +1,11 @@
+<configuration>
+    <appender name="JSON_STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app_name":"my-scala-service"}</customFields>
+        </encoder>
+    </appender>
+
+    <root level="DEBUG">
+        <appender-ref ref="JSON_STDOUT" />
+    </root>
+</configuration>

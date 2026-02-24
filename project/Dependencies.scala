@@ -18,6 +18,7 @@ object Dependencies {
 
   val http4sServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
   val http4sDsl    = "org.http4s" %% "http4s-dsl"          % http4sVersion
+  val http4sCircie = "org.http4s" %% "http4s-circe"        % http4sVersion
 
   // sttp
   val sttpVersion = "3.10.2"
@@ -26,7 +27,8 @@ object Dependencies {
   val sttpCats = "com.softwaremill.sttp.client3" %% "cats" % sttpVersion
 
   // logback
-  val logback = "ch.qos.logback" % "logback-classic" % "1.5.16"
+  val logback        = "ch.qos.logback"       % "logback-classic"          % "1.5.32"
+  val logbackEncoder = "net.logstash.logback" % "logstash-logback-encoder" % "9.0"
 
   // tethys
   val tethysVersion = "0.29.3"
@@ -35,10 +37,35 @@ object Dependencies {
   val tethysJackson    = "com.tethys-json" %% "tethys-jackson213" % tethysVersion
   val tethysDerivation = "com.tethys-json" %% "tethys-derivation" % tethysVersion
 
-  // pureconfig
-  val pureConfigVersion = "0.17.8"
+  val circeVersion = "0.14.15"
+  val circeCore    = "io.circe" %% "circe-core"    % circeVersion
+  val circeGeneric = "io.circe" %% "circe-generic" % circeVersion
 
-  val pureConfigCore = "com.github.pureconfig" %% "pureconfig-core" % pureConfigVersion
+  // pureconfig
+  val pureConfigVersion = "0.17.10"
+  val pureConfig        = "com.github.pureconfig" %% "pureconfig"      % pureConfigVersion
+  val pureConfigCore    = "com.github.pureconfig" %% "pureconfig-core" % pureConfigVersion
+
+  // neotype
+  val newtypeVersion = "0.4.4"
+
+  val newtype = "io.estatico" %% "newtype" % "0.4.4"
+
+  val tofuVersion = "0.14.0"
+
+  val tofuKernel            = "tf.tofu" %% "tofu-kernel"             % tofuVersion
+  val tofuCoreCe3           = "tf.tofu" %% "tofu-core-ce3"           % tofuVersion
+  val tofuLogging           = "tf.tofu" %% "tofu-logging"            % tofuVersion
+  val tofuLoggingDerivation = "tf.tofu" %% "tofu-logging-derivation" % tofuVersion
+  val tofuHigherKind        = "tf.tofu" %% "tofu-core-higher-kind"   % tofuVersion
+  val tofuDerevoCore        = "tf.tofu" %% "derevo-core"             % tofuVersion
+  val tofuDerevoCats        = "tf.tofu" %% "derevo-cats"             % tofuVersion
+  val tofuDerevation        = "tf.tofu" %% "tofu-derivation"         % tofuVersion
+
+  val scalatest               = "org.scalatest"     %% "scalatest"                     % "3.2.19"   % Test
+  val scalatestCatsEffect     = "org.typelevel"     %% "cats-effect-testing-scalatest" % "1.7.0"    % Test
+  val scalatestPlusScalaCheck = "org.scalatestplus" %% "scalacheck-1-19"               % "3.2.19.0" % Test
+  val scalacheckMagnolify     = "com.spotify"       %% "magnolify-scalacheck"          % "0.9.4"    % Test
 
   val allDeps: Seq[ModuleID] = Seq(
     catsCore,
@@ -48,6 +75,7 @@ object Dependencies {
     tapirTethys,
     tapirSttpClient,
     http4sServer,
+    http4sCircie,
     http4sDsl,
     sttpCore,
     sttpCats,
@@ -55,6 +83,19 @@ object Dependencies {
     tethysCore,
     tethysJackson,
     tethysDerivation,
+    circeCore,
+    circeGeneric,
+    pureConfig,
     pureConfigCore,
+    newtype,
+    tofuKernel,
+    tofuCoreCe3,
+    tofuLogging,
+    tofuLoggingDerivation,
+    tofuDerevation,
+    scalatest,
+    scalatestCatsEffect,
+    scalatestPlusScalaCheck,
+    scalacheckMagnolify
   )
 }

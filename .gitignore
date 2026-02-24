@@ -1,0 +1,6 @@
+/.idea
+
+/bot/src/main/resources/application.conf
+
+target
+/.bsp/sbt.json
