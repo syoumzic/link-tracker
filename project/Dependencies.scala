@@ -1,4 +1,4 @@
-import sbt.*
+import sbt.{compilerPlugin, *}
 
 object Dependencies {
   // cats
@@ -6,40 +6,31 @@ object Dependencies {
   val catsEffect = "org.typelevel" %% "cats-effect" % "3.5.7"
 
   // tapir
-  val tapirVersion = "1.11.13"
+  val tapirVersion = "1.13.12"
 
   val tapirHttp4s     = "com.softwaremill.sttp.tapir" %% "tapir-http4s-server"     % tapirVersion
   val tapirSwagger    = "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % tapirVersion
-  val tapirTethys     = "com.softwaremill.sttp.tapir" %% "tapir-json-tethys"       % tapirVersion
   val tapirSttpClient = "com.softwaremill.sttp.tapir" %% "tapir-sttp-client"       % tapirVersion
+  val tapirNewtype    = "com.softwaremill.sttp.tapir" %% "tapir-newtype"           % tapirVersion
+  val tapirCirce      = "com.softwaremill.sttp.tapir" %% "tapir-json-circe"        % tapirVersion
 
   // http4s
-  val http4sVersion = "0.23.30"
+  val http4sVersion = "0.23.33"
 
   val http4sServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
   val http4sDsl    = "org.http4s" %% "http4s-dsl"          % http4sVersion
-  val http4sCircie = "org.http4s" %% "http4s-circe"        % http4sVersion
 
   // sttp
-  val sttpVersion = "3.10.2"
+  val sttpVersion = "4.0.19"
 
-  val sttpCore = "com.softwaremill.sttp.client3" %% "core" % sttpVersion
-  val sttpCats = "com.softwaremill.sttp.client3" %% "cats" % sttpVersion
+  val sttpCore   = "com.softwaremill.sttp.client4" %% "core"           % sttpVersion
+  val sttpCats   = "com.softwaremill.sttp.client4" %% "cats"           % sttpVersion
+  val sttpHttp4s = "com.softwaremill.sttp.client4" %% "http4s-backend" % sttpVersion
+  val sttpCirce  = "com.softwaremill.sttp.client4" %% "circe"          % sttpVersion
 
   // logback
   val logback        = "ch.qos.logback"       % "logback-classic"          % "1.5.32"
   val logbackEncoder = "net.logstash.logback" % "logstash-logback-encoder" % "9.0"
-
-  // tethys
-  val tethysVersion = "0.29.3"
-
-  val tethysCore       = "com.tethys-json" %% "tethys-core"       % tethysVersion
-  val tethysJackson    = "com.tethys-json" %% "tethys-jackson213" % tethysVersion
-  val tethysDerivation = "com.tethys-json" %% "tethys-derivation" % tethysVersion
-
-  val circeVersion = "0.14.15"
-  val circeCore    = "io.circe" %% "circe-core"    % circeVersion
-  val circeGeneric = "io.circe" %% "circe-generic" % circeVersion
 
   // pureconfig
   val pureConfigVersion = "0.17.10"
@@ -61,30 +52,35 @@ object Dependencies {
   val tofuDerevoCore        = "tf.tofu" %% "derevo-core"             % tofuVersion
   val tofuDerevoCats        = "tf.tofu" %% "derevo-cats"             % tofuVersion
   val tofuDerevation        = "tf.tofu" %% "tofu-derivation"         % tofuVersion
+  val tofuOpticsCore        = "tf.tofu" %% "tofu-optics-core"        % tofuVersion
+  val tofuOpticsMacro       = "tf.tofu" %% "tofu-optics-macro"       % tofuVersion
+  val tofuOpticsInterop     = "tf.tofu" %% "tofu-optics-interop"     % tofuVersion
+
+  val canoe = "org.augustjune" %% "canoe" % "0.6.0"
 
   val scalatest               = "org.scalatest"     %% "scalatest"                     % "3.2.19"   % Test
   val scalatestCatsEffect     = "org.typelevel"     %% "cats-effect-testing-scalatest" % "1.7.0"    % Test
   val scalatestPlusScalaCheck = "org.scalatestplus" %% "scalacheck-1-19"               % "3.2.19.0" % Test
   val scalacheckMagnolify     = "com.spotify"       %% "magnolify-scalacheck"          % "0.9.4"    % Test
 
+  val weaver     = "org.typelevel"  %% "weaver-cats"            % "0.12.0" % Test
+  val mockServer = "org.mock-server" % "mockserver-client-java" % "5.15.0"
+
   val allDeps: Seq[ModuleID] = Seq(
     catsCore,
     catsEffect,
     tapirHttp4s,
     tapirSwagger,
-    tapirTethys,
     tapirSttpClient,
+    tapirNewtype,
+    tapirCirce,
     http4sServer,
-    http4sCircie,
     http4sDsl,
     sttpCore,
     sttpCats,
+    sttpHttp4s,
+    sttpCirce,
     logback,
-    tethysCore,
-    tethysJackson,
-    tethysDerivation,
-    circeCore,
-    circeGeneric,
     pureConfig,
     pureConfigCore,
     newtype,
@@ -93,9 +89,12 @@ object Dependencies {
     tofuLogging,
     tofuLoggingDerivation,
     tofuDerevation,
+    canoe,
     scalatest,
     scalatestCatsEffect,
     scalatestPlusScalaCheck,
-    scalacheckMagnolify
+    weaver,
+    mockServer,
+    compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.4" cross CrossVersion.full),
   )
 }
