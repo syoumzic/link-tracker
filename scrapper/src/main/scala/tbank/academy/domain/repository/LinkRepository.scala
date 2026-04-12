@@ -10,7 +10,7 @@ trait LinkRepository[F[_]] {
   def insertLink(chatId: Long, link: Link): F[Link]
   def getLinks(chatId: Long): F[List[Link]]
   def getLinks(chatId: Long, tag: String): F[List[Link]]
-  def getLinks: F[List[Link]]
+  def getLinks: F[List[Link]] // FIXME getLinks by site
   def deleteLink(chatId: Long, url: String): F[Link]
   def updateCount(url: String, count: Long): F[Unit]
 }

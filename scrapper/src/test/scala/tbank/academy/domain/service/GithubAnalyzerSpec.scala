@@ -5,8 +5,6 @@ import cats.effect.unsafe.implicits.global
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
-import sttp.client4.ResponseException.UnexpectedStatusCode
-import sttp.model.{ResponseMetadata, StatusCode}
 import tbank.academy.domain.client.{ApiClient, BotClient, GithubBatchClient}
 import tbank.academy.{Github, Link}
 import tbank.academy.domain.repository.LinkRepository
@@ -78,7 +76,7 @@ class GithubAnalyzerSpec extends AnyFlatSpec with MockFactory with AnalyzerAbstr
 
     val githubBatchClient = GithubBatchClient.makeInternal(client)(batchSize)
 
-    GithubAnalyzer.makeInternal(githubBatchClient, botClient, repo)(maxConcurrent, 0L).update.unsafeRunSync()
+    GithubAnalyzer.makeInternal(githubBatchClient, botClient, repo)(maxConcurrent).update.unsafeRunSync()
 
     assert(updatePullRequestQueue.toSet == updatePullRequest && updateIssueQueue.toSet == updateIssue)
   }
@@ -105,56 +103,5 @@ class GithubAnalyzerSpec extends AnyFlatSpec with MockFactory with AnalyzerAbstr
       )
     )
   )
-
-  "github analyzer" should "skip link with bad status" in {
-    val goodUrl = "<good-url>"
-    val badUrl  = "<bad-url>"
-
-    (() => repo.getLinks)
-      .expects()
-      .returning(IO(List(
-        Link(chatIds = chatIds, url = badUrl, apiUrl = badUrl, site = Github, processedCount = 0),
-        Link(chatIds = chatIds, url = goodUrl, apiUrl = goodUrl, site = Github, processedCount = 0),
-      )))
-
-    (repo.updateCount _)
-      .expects(goodUrl, *)
-      .returning(IO.unit)
-
-    (client.execute[List[GithubRequestItem]](_: String)(_: JsonReader[List[GithubRequestItem]]))
-      .expects(where { (url: String, _: Any) => url.startsWith(badUrl) })
-      .returning(IO.raiseError(UnexpectedStatusCode[String](
-        "error",
-        ResponseMetadata(StatusCode.BadRequest, "", Seq.empty)
-      )))
-
-    (client.execute[List[GithubRequestItem]](_: String)(_: JsonReader[List[GithubRequestItem]]))
-      .expects(where { (url: String, _: Any) => url.startsWith(goodUrl) })
-      .returning(getJson[List[GithubRequestItem]]("github/repos/events/Ok"))
-
-    val updatePullRequestQueue: mutable.Queue[UpdatePullRequest] = mutable.Queue.empty
-
-    (botClient.updatePullRequest _)
-      .expects(*, *, *, *, *)
-      .onCall((chatIds, url, title, username, uptime) => {
-        updatePullRequestQueue.enqueue(UpdatePullRequest(chatIds, url, title, username, uptime))
-        IO.unit
-      })
-
-    val updateIssueQueue: mutable.Queue[UpdateIssue] = mutable.Queue.empty
-
-    (botClient.updateIssue _)
-      .expects(*, *, *, *, *, *)
-      .onCall((chatIds, url, title, description, username, uptime) => {
-        updateIssueQueue.enqueue(UpdateIssue(chatIds, url, title, description, username, uptime))
-        IO.unit
-      })
-
-    val githubBatchClient = GithubBatchClient.makeInternal(client)(batchSize)
-
-    GithubAnalyzer.makeInternal(githubBatchClient, botClient, repo)(maxConcurrent, 0L).update.unsafeRunSync()
-
-    assert(updatePullRequestQueue.nonEmpty || updateIssueQueue.nonEmpty)
-  }
 }
 // scalafix:on Disable.collection.mutable

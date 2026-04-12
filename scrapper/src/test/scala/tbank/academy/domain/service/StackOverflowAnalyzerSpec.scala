@@ -5,8 +5,6 @@ import cats.effect.unsafe.implicits.global
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
-import sttp.client4.ResponseException.UnexpectedStatusCode
-import sttp.model.{ResponseMetadata, StatusCode}
 import tbank.academy.domain.client.{ApiClient, BotClient, StackoverflowBatchClient}
 import tbank.academy.{Link, Stackoverflow}
 import tbank.academy.domain.repository.LinkRepository
@@ -34,7 +32,7 @@ class StackOverflowAnalyzerSpec extends AnyFlatSpec with MockFactory with Analyz
   val botClient: BotClient[IO]          = mock[BotClient[IO]]
   implicit val logger: Logging.Make[IO] = Logging.Make.plain[IO]
 
-  def stackoverflowTest(
+  def githubTest(
       updateAnswer: Set[UpdateQuestion] = Set.empty,
       updateComment: Set[UpdateQuestion] = Set.empty,
       processedCount: Long = 0
@@ -85,12 +83,12 @@ class StackOverflowAnalyzerSpec extends AnyFlatSpec with MockFactory with Analyz
 
     val stackOverflowClient = StackoverflowBatchClient.makeInternal(client)(batchSize)
 
-    StackoverflowAnalyzer.makeInternal(stackOverflowClient, botClient, repo)(maxConcurrent, 0L).update.unsafeRunSync()
+    StackoverflowAnalyzer.makeInternal(stackOverflowClient, botClient, repo)(maxConcurrent).update.unsafeRunSync()
 
     assert(updateAnswerQueue.toSet == updateAnswer && updateCommentQueue.toSet == updateComment)
   }
 
-  "stackoverflow analyzer" should "send commands to bot" in stackoverflowTest(
+  "github analyzer" should "send commands to bot" in githubTest(
     updateAnswer = Set(
       UpdateQuestion(
         chatIds = chatIds,
@@ -116,64 +114,5 @@ class StackOverflowAnalyzerSpec extends AnyFlatSpec with MockFactory with Analyz
       )
     )
   )
-
-  "stackoverflow analyzer" should "skip link with bad status" in {
-    val goodUrl = "<good-url>"
-    val badUrl  = "<bad-url>"
-
-    (() => repo.getLinks)
-      .expects()
-      .returning(IO(List(
-        Link(chatIds = chatIds, url = badUrl, apiUrl = badUrl, site = Stackoverflow, processedCount = 0),
-        Link(chatIds = chatIds, url = goodUrl, apiUrl = goodUrl, site = Stackoverflow, processedCount = 0),
-      )))
-
-    (repo.updateCount _)
-      .expects(goodUrl, *)
-      .returning(IO.unit)
-
-    (client.execute[StackoverflowResponse[QuestionItem]](_: String)(_: JsonReader[StackoverflowResponse[QuestionItem]]))
-      .expects(where { (url: String, _: Any) => url.startsWith(badUrl) })
-      .returning(IO.raiseError(UnexpectedStatusCode[String](
-        "error",
-        ResponseMetadata(StatusCode.BadRequest, "", Seq.empty)
-      )))
-
-    (client.execute[StackoverflowResponse[QuestionItem]](_: String)(_: JsonReader[StackoverflowResponse[QuestionItem]]))
-      .expects(where { (url: String, _: Any) => url.startsWith(goodUrl) })
-      .returning(getJson[StackoverflowResponse[QuestionItem]]("stackoverflow/questions/Ok"))
-
-    (client.execute[StackoverflowResponse[AnswerItem]](_: String)(_: JsonReader[StackoverflowResponse[AnswerItem]]))
-      .expects(where { (url: String, _: Any) => url.startsWith(goodUrl) })
-      .returning(getJson[StackoverflowResponse[AnswerItem]]("stackoverflow/questions/answers/Ok"))
-
-    (client.execute[StackoverflowResponse[CommentItem]](_: String)(_: JsonReader[StackoverflowResponse[CommentItem]]))
-      .expects(where { (url: String, _: Any) => url.startsWith(goodUrl) })
-      .returning(getJson[StackoverflowResponse[CommentItem]]("stackoverflow/questions/comments/Ok"))
-
-    val updateAnswerQueue: mutable.Queue[UpdateQuestion] = mutable.Queue.empty
-
-    (botClient.updateAnswer _)
-      .expects(*, *, *, *, *)
-      .onCall((chatIds, question, username, uptime, description) => {
-        updateAnswerQueue.enqueue(UpdateQuestion(chatIds, question, username, uptime, description))
-        IO.unit
-      })
-
-    val updateCommentQueue: mutable.Queue[UpdateQuestion] = mutable.Queue.empty
-
-    (botClient.updateComment _)
-      .expects(*, *, *, *, *)
-      .onCall((chatIds, question, username, uptime, description) => {
-        updateCommentQueue.enqueue(UpdateQuestion(chatIds, question, username, uptime, description))
-        IO.unit
-      })
-
-    val stackOverflowClient = StackoverflowBatchClient.makeInternal(client)(batchSize)
-
-    StackoverflowAnalyzer.makeInternal(stackOverflowClient, botClient, repo)(maxConcurrent, 0L).update.unsafeRunSync()
-
-    assert(updateAnswerQueue.nonEmpty && updateCommentQueue.nonEmpty)
-  }
 }
 //scalafix:on Disable.collection.mutable

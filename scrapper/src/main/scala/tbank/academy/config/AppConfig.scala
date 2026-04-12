@@ -21,7 +21,7 @@ case class AppConfig(
 
 case class BatchClientConfig(batchSize: Int)
 
-case class AnalyzerConfig(maxConcurrent: Option[Int], delayMs: Long)
+case class AnalyzerConfig(maxConcurrent: Option[Int])
 
 case class DoobieConfig(driver: String, user: String, url: String, password: String)
 
