@@ -17,7 +17,6 @@ trait RepositorySpec extends AnyFlatSpec with Matchers with TestContainerForEach
       .locations("filesystem:migrations")
       .load()
       .migrate()
-
     ()
   }
 }

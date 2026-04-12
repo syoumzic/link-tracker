@@ -12,19 +12,28 @@ import scala.concurrent.duration.{DurationLong, FiniteDuration}
 
 case class AppConfig(
     server: ServerConfig,
-    monitor: MonitorConfig,
     bot: BotConfig,
     doobie: DoobieConfig,
-    `access-type`: String
+    clients: ClientsConfig,
+    analyzer: AnalyzerConfig,
+    batchClient: BatchClientConfig
 )
+
+case class BatchClientConfig(batchSize: Int)
+
+case class AnalyzerConfig(maxConcurrent: Option[Int], delayMs: Long)
 
 case class DoobieConfig(driver: String, user: String, url: String, password: String)
 
 case class ServerConfig(host: Host, port: Port)
 
-case class MonitorConfig(timeout: FiniteDuration)
+case class BotConfig(url: Uri, maxDescriptionSize: Int)
 
-case class BotConfig(url: Uri)
+case class ClientsConfig(github: GithubConfig, stackoverflow: StackOverflowConfig)
+
+case class GithubConfig(timeout: FiniteDuration)
+
+case class StackOverflowConfig(timeout: FiniteDuration)
 
 object AppConfig {
   def load[F[_]](implicit async: Async[F]): F[AppConfig] =

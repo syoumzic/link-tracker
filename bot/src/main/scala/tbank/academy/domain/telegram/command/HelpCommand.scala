@@ -19,7 +19,7 @@ object HelpCommand extends LoggingCompanion[HelpCommand] {
         _    <- Scenario.eval(info"в чате ${chat.id} воспользовались командой /help")
         _    <- Scenario.eval(
           client.sendMessage(
-            chat,
+            chat.id,
             """Я бот для агрегации уведомлений. Я умею:
               |/start - вывести преветственное сообщение
               |/help - вывести help сообщение""".stripMargin

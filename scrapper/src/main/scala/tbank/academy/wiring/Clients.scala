@@ -1,28 +1,33 @@
 package tbank.academy.wiring
 
 import cats.effect._
+import cats.effect.implicits.effectResourceOps
 import sttp.client4.httpclient.fs2.HttpClientFs2Backend
-import tbank.academy.adapter.client.http.{BotClient, GithubClient, StackoverflowClient}
+import tbank.academy.adapter.client.http.BotClient
 import tbank.academy.config.AppConfig
 import tbank.academy.domain.client._
 import tofu.WithContext
-import tofu.logging.Logging
 
 case class Clients[F[_]](
     botClient: BotClient[F],
-    githubClient: GithubClient[F],
-    stackoverflowClient: StackoverflowClient[F]
+    githubClient: GithubBatchClient[F],
+    stackoverflowClient: StackoverflowBatchClient[F]
 )
 
 object Clients {
-  def make[F[_]: Async: Logging.Make](implicit context: WithContext[F, AppConfig]): Resource[F, Clients[F]] =
-    HttpClientFs2Backend
-      .resource[F]()
-      .map(client =>
-        Clients(
-          BotClient.make[F](client),
-          GithubClient.make[F](client),
-          StackoverflowClient.make[F](client)
-        )
-      )
+  def make[F[_]: Async](implicit context: WithContext[F, AppConfig]): Resource[F, Clients[F]] = {
+    for {
+      client               <- HttpClientFs2Backend.resource[F]()
+      githubClientTimeout  <- context.ask(_.clients.github.timeout).toResource
+      stackoverflowTimeout <- context.ask(_.clients.stackoverflow.timeout).toResource
+
+      githubClient        = ApiClient.make[F](client, githubClientTimeout)
+      stackoverflowClient = ApiClient.make[F](client, stackoverflowTimeout)
+
+      githubBatchClient        <- GithubBatchClient.make(githubClient).toResource
+      stackoverflowBatchClient <- StackoverflowBatchClient.make(stackoverflowClient).toResource
+
+      botClient <- BotClient.make(client).toResource
+    } yield Clients(botClient, githubBatchClient, stackoverflowBatchClient)
+  }
 }

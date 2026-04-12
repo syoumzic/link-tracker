@@ -19,8 +19,8 @@ object LinkRepository {
       override def insertLink(chatId: Long, link: Link): F[Link] = (
         for {
           linkId <- sql"""
-            INSERT INTO links (chatId, url, apiUrl, site, lastUpdate)
-            VALUES ($chatId, ${link.url}, ${link.apiUrl}, ${link.site}, ${link.lastUpdate})
+            INSERT INTO links (chatId, url, apiUrl, site, lastUpdate, processedCount)
+            VALUES ($chatId, ${link.url}, ${link.apiUrl}, ${link.site}, ${link.lastUpdate}, ${link.processedCount})
             RETURNING id
           """
             .query[Long]
@@ -37,11 +37,11 @@ object LinkRepository {
           SELECT l.url, l.apiUrl, l.site,
                  array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL),
                  array_agg(DISTINCT l.chatId),
-                 l.lastUpdate
+                 l.lastUpdate, l.processedCount
           FROM links l
           LEFT JOIN tags t ON l.id = t.linkId
           WHERE l.chatId = $chatId
-          GROUP BY l.url, l.apiUrl, l.site, l.lastUpdate
+          GROUP BY l.url, l.apiUrl, l.site, l.lastUpdate, l.processedCount
         """.query[Link]
           .to[List]
           .transact(transactior)
@@ -49,14 +49,15 @@ object LinkRepository {
 
       override def getLinks(chatId: Long, tag: String): F[List[Link]] =
         sql"""
-          SELECT l.url, l.apiUrl, l.site, l.lastUpdate,
+          SELECT l.url, l.apiUrl, l.site,
                  array_agg(t.name) as tags,
-                 array_agg(l.chatId) as chatIds
+                 array_agg(l.chatId) as chatIds,
+                 l.lastUpdate, l.processedCount
           FROM links l
           LEFT JOIN tags t ON l.id = t.linkId
           WHERE l.chatId = $chatId
             AND l.id IN (SELECT linkId FROM tags WHERE name = $tag)
-          GROUP BY l.url, l.apiUrl, l.site, l.lastUpdate
+          GROUP BY l.url, l.apiUrl, l.site, l.lastUpdate, l.processedCount
         """
           .query[Link]
           .to[List]
@@ -65,42 +66,43 @@ object LinkRepository {
 
       override def getLinks: F[List[Link]] = {
         sql"""
-          SELECT l.url, l.apiUrl, l.site, l.lastUpdate,
+          SELECT l.url, l.apiUrl, l.site,
                  (SELECT array_agg(DISTINCT name) FROM tags WHERE linkId IN (SELECT id FROM links WHERE url = l.url)) as tags,
-                 array_agg(DISTINCT l.chatId) as chatIds
+                 array_agg(DISTINCT l.chatId) as chatIds,
+                 l.lastUpdate, l.processedCount
           FROM links l
-          GROUP BY l.url, l.apiUrl, l.site, l.lastUpdate
+          GROUP BY l.url, l.apiUrl, l.site, l.lastUpdate, l.processedCount
         """
           .query[Link]
           .to[List]
           .transact(transactior)
       }
 
-      override def updateLinks(links: List[Link]): F[Unit] = links.traverse(link =>
-        sql"""
-          UPDATE links 
-          SET lastUpdate = ${link.lastUpdate} 
-          WHERE url = ${link.url}
-        """
-          .update
-          .run
-          .transact(transactior)
-      ).void
-
       override def deleteLink(chatId: Long, url: String): F[Link] = (for {
         link <- sql"""
           SELECT l.url, l.apiUrl, l.site,
                  array_agg(t.name) FILTER (WHERE t.name IS NOT NULL),
                  array_agg(DISTINCT l.chatId),
-                 l.lastUpdate
+                 l.lastUpdate, l.processedCount
           FROM links l
           LEFT JOIN tags t ON l.id = t.linkId
           WHERE l.chatId = $chatId AND l.url = $url
-          GROUP BY l.url, l.apiUrl, l.site, l.lastUpdate
+          GROUP BY l.url, l.apiUrl, l.site, l.lastUpdate, l.processedCount
         """.query[Link].unique
 
         _ <- sql"DELETE FROM links WHERE chatId = $chatId AND url = $url".update.run
 
       } yield link).transact(transactior)
+
+      override def updateCount(url: String, count: Long): F[Unit] =
+        sql"""
+         UPDATE links
+         SET processedCount = $count
+         WHERE url = $url
+        """
+          .update
+          .run
+          .transact(transactior)
+          .void
     }
 }

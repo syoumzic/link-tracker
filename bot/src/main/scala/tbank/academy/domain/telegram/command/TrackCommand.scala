@@ -23,21 +23,21 @@ object TrackCommand {
       def scenario: Scenario[F, Unit] = for {
         chat <- Scenario.expect(privateChat(name))
         _    <- Scenario.eval(client.sendMessage(
-          chat,
+          chat.id,
           "Введите ссылку (поддерживается отслеживание github repository, stackoverflow question)"
         ))
         url  <- Scenario.expect(text)
-        _    <- Scenario.eval(client.sendMessage(chat, "Можете добавить ссылке теги"))
+        _    <- Scenario.eval(client.sendMessage(chat.id, "Можете добавить ссылке теги"))
         tags <- Scenario.expect(tagsOption)
         _    <- Scenario.eval(
           scrapperClient
             .linksPost(chat.id, url, tags.getOrElse(Set.empty), Set.empty)
             .flatMap { _ =>
-              client.sendMessage(chat, "Ссылка успешно добавлена")
+              client.sendMessage(chat.id, "Ссылка успешно добавлена")
             }
             .recoverWith {
-              case LinkAlreadyExist(message) => client.sendMessage(chat, message)
-              case UnexpectedLink(message)   => client.sendMessage(chat, message)
+              case LinkAlreadyExist(message) => client.sendMessage(chat.id, message)
+              case UnexpectedLink(message)   => client.sendMessage(chat.id, message)
             }
         )
       } yield ()

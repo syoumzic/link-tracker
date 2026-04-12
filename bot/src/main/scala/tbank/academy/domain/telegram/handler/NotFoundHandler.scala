@@ -10,7 +10,7 @@ object NotFoundHandler {
     override val scenario: Scenario[F, Unit] = for {
       message <- Scenario.expect(incorrectCommand)
       _       <- Scenario.eval(client.sendMessage(
-        message.chat,
+        message.chat.id,
         "Не совсем понимаю, что имелось ввиду. Cписок доступных комманд /help"
       ))
     } yield ()
