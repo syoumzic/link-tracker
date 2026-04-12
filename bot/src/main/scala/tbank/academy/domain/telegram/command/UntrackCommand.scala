@@ -4,8 +4,8 @@ import canoe.api.Scenario
 import canoe.syntax.text
 import cats.effect.Async
 import cats.implicits._
+import tbank.academy.adapters.client.http.ScrapperClient.LinkNotFound
 import tbank.academy.domain.client.{ScrapperClient, TgClient}
-import tbank.academy.domain.model.Link.LinkNotFound
 import tbank.academy.domain.telegram.command.Command.privateChat
 
 trait UntrackCommand[F[_]] extends Command[F]

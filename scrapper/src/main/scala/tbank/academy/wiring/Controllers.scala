@@ -1,13 +1,15 @@
 package tbank.academy.wiring
 
-import cats.effect.Async
+import cats.effect.{Async, Resource}
 import tbank.academy.adapter.controller.http.ScrapperController
 import tofu.logging.Logging
 
-case class Controllers[F[_]](botController: ScrapperController[F])
+case class Controllers[F[_]](scrapperController: ScrapperController[F])
 
 object Controllers {
-  def make[F[_]: Async: Logging.Make](repositories: Repositories[F]): Controllers[F] = new Controllers(
-    ScrapperController.make[F](repositories.chatRepository)
+  def make[F[_]: Async: Logging.Make](services: Services[F]): Resource[F, Controllers[F]] = Resource.pure(
+    new Controllers(
+      ScrapperController.make[F](services.chatService, services.linkService)
+    )
   )
 }

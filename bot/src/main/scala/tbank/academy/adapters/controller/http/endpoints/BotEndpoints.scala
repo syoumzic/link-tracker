@@ -5,7 +5,7 @@ import sttp.model.StatusCode
 import sttp.tapir._
 import sttp.tapir.generic.auto._
 import sttp.tapir.json.circe._
-import tbank.academy.domain.model.http._
+import tbank.academy.http._
 
 object BotEndpoints {
   private val updates = "updates"

@@ -7,16 +7,13 @@ import canoe.syntax._
 import cats.effect._
 import cats.effect.implicits._
 import cats.implicits._
-import glass.Extract
 import tbank.academy.config.AppConfig
-import tbank.academy.config.AppConfig.BotConfig
 import tbank.academy.domain.client.TgClient
-import tbank.academy.domain.model.TgChat
 import tofu.WithContext
 
 object TgClient {
-  def make[F[_]: Async](implicit F: WithContext[F, AppConfig]): Resource[F, TgClient[F]] = {
-    token.toResource
+  def make[F[_]: Async](implicit context: WithContext[F, AppConfig]): Resource[F, TgClient[F]] = {
+    context.ask(_.bot.token).toResource
       .flatMap(token => TelegramClient.apply(token))
       .map(implicit client => application[F])
   }
@@ -26,15 +23,9 @@ object TgClient {
 
     override def sendMessage(chat: Chat, message: String): F[Unit] = chat.send(message).void
 
-    override def updateLink(chatId: TgChat.Id, uri: String): F[Unit] =
+    override def updateLink(chatId: Long, uri: String): F[Unit] =
       sendMessage(PrivateChat(chatId, None, None, None), s"Похоже по ссылке $uri что-то обновилось")
 
     override def pooling: Bot[F] = Bot.polling
   }
-
-  private def token[F[_]](implicit
-      C: WithContext[F, AppConfig],
-  ): F[String] =
-    WithContext[F, AppConfig].extract((_.bot): Extract[AppConfig, BotConfig]).ask(_.token)
-
 }

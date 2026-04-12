@@ -1,9 +1,9 @@
 package tbank.academy.domain.client
 
-import tbank.academy.domain.model.{Link, Site}
+import tbank.academy.Link
+
+import scala.concurrent.duration.FiniteDuration
 
 trait Crawler[F[_]] {
-  val site: Site
-
-  def requestUpdate(link: Link): F[Option[Link]]
+  def requestUpdate(link: Link, timeout: FiniteDuration): F[Option[Link]]
 }

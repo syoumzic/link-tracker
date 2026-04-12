@@ -1,78 +1,106 @@
 package tbank.academy.domain.service
 
+import cats.data.ReaderT
 import cats.effect.unsafe.implicits.global
-import cats.effect.{IO, Ref}
+import cats.effect.Ref
 import cats.implicits._
+import com.comcast.ip4s.{Host, Port}
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import sttp.model.Uri
+import tbank.academy.App.AppT
+import tbank.academy.config._
+import tbank.academy.{Github, Link, Site, Stackoverflow}
 import tbank.academy.domain.client.{BotClient, GithubClient, StackoverflowClient}
-import tbank.academy.domain.model.TgChat.Id
-import tbank.academy.domain.model.{Link, Site, TgChat}
 import tbank.academy.domain.repository.{ChatRepository, LinkRepository}
 
+import scala.concurrent.duration._
 import scala.collection.immutable.Queue
+import scala.concurrent.duration.FiniteDuration
 
 class MonitorSpec extends AnyFlatSpec with Matchers with ScalaCheckPropertyChecks {
 
-  class mocks(updates: Map[Site, List[Link]], links: List[Link], ref: Ref[IO, Queue[Link]]) {
-    val botClient: BotClient[IO] = (links: Link) => ref.update(_.enqueue(links))
+  class mocks(updates: Map[Site, List[Link]], links: List[Link], ref: Ref[AppT, Queue[Link]]) {
+    val botClient: BotClient[AppT] = (links: Link) => ref.update(_.enqueue(links))
 
-    private def findOrNone(site: Site, link: Link): IO[Option[Link]] =
-      updates.get(site).filter(_.contains(link)).as(link).pure[IO]
+    private def findOrNone(site: Site, link: Link): AppT[Option[Link]] =
+      updates.get(site).filter(_.contains(link)).as(link).pure[AppT]
 
-    val githubCrawler: GithubClient[IO] = new GithubClient[IO] {
-      override val site: Site = Site.Github
+    val githubCrawler: GithubClient[AppT] =
+      (link: Link, _: FiniteDuration) => findOrNone(Github, link)
 
-      override def requestUpdate(link: Link): IO[Option[Link]] = findOrNone(Site.Github, link)
+    val stackoverflowCrawler: StackoverflowClient[AppT] =
+      (link: Link, _: FiniteDuration) => findOrNone(Stackoverflow, link)
+
+    val chatRepository: ChatRepository[AppT] = new ChatRepository[AppT] {
+      override def registerChat(chatId: Long): AppT[Unit] = ReaderT.pure(())
+
+      override def deleteChat(chatId: Long): AppT[Unit] = ReaderT.pure(())
     }
 
-    val stackoverflowCrawler: StackoverflowClient[IO] = new StackoverflowClient[IO] {
-      override val site: Site = Site.StackOverflow
+    val linkRepository: LinkRepository[AppT] = new LinkRepository[AppT] {
+      private val emptyLink = Link("", "", Github, Set.empty[String], Set.empty[Long], None)
 
-      override def requestUpdate(link: Link): IO[Option[Link]] = findOrNone(Site.StackOverflow, link)
-    }
+      override def getLinks(chatId: Long): AppT[List[Link]] = links.pure[AppT]
 
-    val chatRepository: ChatRepository[IO] = new ChatRepository[IO] {
-      override def registerChat(chatId: TgChat.Id): IO[Unit] = IO.unit
+      override def updateLinks(links: List[Link]): AppT[Unit] = ReaderT.pure(())
 
-      override def deleteChat(chatId: TgChat.Id): IO[Unit] = IO.unit
+      override def getLinks: AppT[List[Link]] = links.pure[AppT]
 
-      override def getLinks(chatId: TgChat.Id, tag: Option[Link.Tag]): IO[List[Link]] = links.pure[IO]
+      override def insertLink(chatId: Long, link: Link): AppT[Link] = link.pure[AppT]
 
-      override def deleteLink(chatId: TgChat.Id, uri: String): IO[Link] =
-        Link(chatId, List.empty, Uri(uri), Uri(uri), Site.Github).pure[IO]
+      override def getLinks(chatId: Long, tag: String): AppT[List[Link]] = List(
+        emptyLink
+      ).pure[AppT]
 
-      override def addLink(chatId: Id, link: Link): IO[Link] = link.pure[IO]
-    }
-
-    val linkRepository: LinkRepository[IO] = new LinkRepository[IO] {
-      override def getLinks(chatId: TgChat.Id): IO[List[Link]] = links.pure[IO]
-
-      override def updateLinks(links: List[Link]): IO[Unit] = IO.unit
-
-      override def getLinks: IO[List[Link]] = links.pure[IO]
+      override def deleteLink(chatId: Long, url: String): AppT[Link] = emptyLink.pure[AppT]
     }
   }
 
   case class LinksTemplate(links: List[Link], updates: Map[Site, List[Link]])
 
-  implicit val uriGen: Gen[Uri] = for {
-    link <-
-      Gen.oneOf("https://github.com/user/repo", "https://stackoverflow.com/questions/123", "http://example.com/path")
-  } yield Uri(link)
+  implicit val uriGen: Gen[String] =
+    Gen.oneOf("https://github.com/user/repo", "https://stackoverflow.com/questions/123", "http://example.com/path")
 
-  implicit val tagGen: Gen[Link.Tag] = Gen.oneOf("dev", "scala", "python", "angular", "lmao")
+  implicit val tagGen: Gen[String] = Gen.oneOf("dev", "scala", "python", "angular", "lmao")
 
   implicit val linkGen: Gen[Link] = for {
     chatId <- Gen.long
     tags   <- Gen.listOf(tagGen)
-    uri    <- uriGen
-    apiUri <- uriGen
-    site   <- Gen.oneOf(Site.Github, Site.StackOverflow)
-  } yield Link(chatId, tags, uri, apiUri, site)
+    url    <- uriGen
+    apiUrl <- uriGen
+    site   <- Gen.oneOf(Github, Stackoverflow)
+  } yield Link(
+    url = url,
+    apiUrl = apiUrl,
+    site = site,
+    tags = tags.toSet,
+    chatIds = Set(chatId),
+    lastUpdate = None
+  )
+  // scalafix:off
+  val testConfig: AppConfig = AppConfig(
+    server = ServerConfig(
+      host = Host.fromString("localhost").get,
+      port = Port.fromInt(8080).get
+    ),
+    monitor = MonitorConfig(
+      timeout = 10.seconds
+    ),
+    bot = BotConfig(
+      url = Uri.unsafeApply("http://localhost:8090")
+    ),
+    doobie = DoobieConfig(
+      driver = "",
+      user = "",
+      url = "",
+      password = ""
+    ),
+    `access-type` = ""
+  )
+  // scalafix:on
 
   implicit val templateGen: Gen[LinksTemplate] = for {
     links       <- Gen.listOf(linkGen)
@@ -81,12 +109,12 @@ class MonitorSpec extends AnyFlatSpec with Matchers with ScalaCheckPropertyCheck
 
   "Monitor" should "send all updates to bot client" in forAll(templateGen) { template =>
     (for {
-      ref <- Ref.of[IO, Queue[Link]](Queue.empty)
+      ref <- Ref.of[AppT, Queue[Link]](Queue.empty)
       mocks   = new mocks(template.updates, template.links, ref)
       monitor =
-        Monitor.make[IO](mocks.linkRepository, mocks.botClient, List(mocks.githubCrawler, mocks.stackoverflowCrawler))
+        Monitor.make[AppT](mocks.linkRepository, mocks.botClient, mocks.githubCrawler, mocks.stackoverflowCrawler)
       _      <- monitor.run
       output <- ref.get
-    } yield output.toSet shouldBe template.updates.values.flatten.toSet).unsafeRunSync()
+    } yield output.toSet shouldBe template.updates.values.flatten.toSet).run(testConfig).unsafeRunSync()
   }
 }

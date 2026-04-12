@@ -6,9 +6,8 @@ import cats.effect.Async
 import cats.implicits._
 import tbank.academy.adapters.client.http.ScrapperClient.ChatNotFound
 import tbank.academy.domain.client.{ScrapperClient, TgClient}
-import tbank.academy.domain.model.Link
-import tbank.academy.domain.model.http.ListLinksResponse
 import tbank.academy.domain.telegram.command.Command.privateChat
+import tbank.academy.http.ListLinksResponse
 
 import scala.util.matching.Regex
 
@@ -40,7 +39,7 @@ object ListCommand {
         )
       } yield ()
 
-      def tagOption: Expect[Option[Link.Tag]] = text.andThen {
+      def tagOption: Expect[Option[String]] = text.andThen {
         case tagRegex(tag) => Some(tag)
         case ""            => None
       }

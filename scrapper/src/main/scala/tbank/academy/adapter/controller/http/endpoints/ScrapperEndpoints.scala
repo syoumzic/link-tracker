@@ -5,24 +5,23 @@ import sttp.model.StatusCode
 import sttp.tapir._
 import sttp.tapir.generic.auto._
 import sttp.tapir.json.circe._
-import tbank.academy.domain.model.TgChat
-import tbank.academy.domain.model.http._
+import tbank.academy.http._
 
 object ScrapperEndpoints {
 
   private val tgChatIdHeader: EndpointIO.Header[Long] =
-    header[TgChat.Id]("Tg-Chat-Id").description("Идентификатор Telegram чата")
+    header[Long]("Tg-Chat-Id").description("Идентификатор Telegram чата")
 
-  private val tgChatRoute: EndpointInput[TgChat.Id] = "tg-chat" / path[TgChat.Id]("id")
+  private val tgChatRoute: EndpointInput[Long] = "tg-chat" / path[Long]("id")
 
-  val tgChatPost: PublicEndpoint[TgChat.Id, (StatusCode, ApiErrorResponse), Unit, Any] =
+  val tgChatPost: PublicEndpoint[Long, (StatusCode, ApiErrorResponse), Unit, Any] =
     endpoint.post
       .summary("Зарегистрировать чат")
       .in(tgChatRoute)
       .out(statusCode(StatusCode.Ok))
       .errorOut(statusCode.and(jsonBody[ApiErrorResponse]))
 
-  val tgChatDelete: PublicEndpoint[TgChat.Id, (StatusCode, ApiErrorResponse), Unit, Any] =
+  val tgChatDelete: PublicEndpoint[Long, (StatusCode, ApiErrorResponse), Unit, Any] =
     endpoint.delete
       .summary("Удалить чат")
       .in(tgChatRoute)
@@ -30,7 +29,7 @@ object ScrapperEndpoints {
       .errorOut(statusCode.and(jsonBody[ApiErrorResponse]))
 
   val linksGet
-      : PublicEndpoint[(TgChat.Id, GetListLinksRequest), (StatusCode, ApiErrorResponse), ListLinksResponse, Any] =
+      : PublicEndpoint[(Long, GetListLinksRequest), (StatusCode, ApiErrorResponse), ListLinksResponse, Any] =
     endpoint.get
       .summary("Получить все отслеживаемые ссылки")
       .in("links")
@@ -39,7 +38,7 @@ object ScrapperEndpoints {
       .out(jsonBody[ListLinksResponse])
       .errorOut(statusCode.and(jsonBody[ApiErrorResponse]))
 
-  val linksPost: PublicEndpoint[(TgChat.Id, AddLinkRequest), (StatusCode, ApiErrorResponse), LinkResponse, Any] =
+  val linksPost: PublicEndpoint[(Long, AddLinkRequest), (StatusCode, ApiErrorResponse), LinkResponse, Any] =
     endpoint.post
       .summary("Добавить отслеживание ссылки")
       .in("links")
@@ -48,7 +47,7 @@ object ScrapperEndpoints {
       .out(jsonBody[LinkResponse])
       .errorOut(statusCode.and(jsonBody[ApiErrorResponse]))
 
-  val linksDelete: PublicEndpoint[(TgChat.Id, RemoveLinkRequest), (StatusCode, ApiErrorResponse), LinkResponse, Any] =
+  val linksDelete: PublicEndpoint[(Long, RemoveLinkRequest), (StatusCode, ApiErrorResponse), LinkResponse, Any] =
     endpoint.delete
       .summary("Убрать отслеживание ссылки")
       .in("links")

@@ -1,4 +1,4 @@
-package tbank.academy.domain.model
+package tbank.academy
 
 import scala.util.control.NoStackTrace
 

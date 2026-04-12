@@ -4,9 +4,8 @@ import canoe.api.Scenario
 import canoe.syntax.{Expect, text}
 import cats.effect.Async
 import cats.implicits._
+import tbank.academy.adapters.client.http.ScrapperClient.{LinkAlreadyExist, UnexpectedLink}
 import tbank.academy.domain.client.{ScrapperClient, TgClient}
-import tbank.academy.domain.model.Link
-import tbank.academy.domain.model.Link.{LinkAlreadyExist, UnexpectedLink}
 import tbank.academy.domain.telegram.command.Command.privateChat
 
 import scala.util.matching.Regex
@@ -32,7 +31,7 @@ object TrackCommand {
         tags <- Scenario.expect(tagsOption)
         _    <- Scenario.eval(
           scrapperClient
-            .linksPost(chat.id, url, tags.getOrElse(List.empty), Nil)
+            .linksPost(chat.id, url, tags.getOrElse(Set.empty), Set.empty)
             .flatMap { _ =>
               client.sendMessage(chat, "Ссылка успешно добавлена")
             }
@@ -43,8 +42,8 @@ object TrackCommand {
         )
       } yield ()
 
-      def tagsOption: Expect[Option[List[Link.Tag]]] = text.andThen {
-        case tagsRegex(tags) => Some(tags.split(",").map(_.trim).toList)
+      def tagsOption: Expect[Option[Set[String]]] = text.andThen {
+        case tagsRegex(tags) => Some(tags.split(",").map(_.trim).toSet)
         case ""              => None
       }
     }

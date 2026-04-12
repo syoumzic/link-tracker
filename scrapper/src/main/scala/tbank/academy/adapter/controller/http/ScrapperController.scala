@@ -5,12 +5,10 @@ import cats.implicits._
 import sttp.model.StatusCode
 import sttp.tapir.server.ServerEndpoint
 import tbank.academy.adapter.controller.http.endpoints.ScrapperEndpoints
-import tbank.academy.adapter.http.controller.Controller
-import tbank.academy.domain.model.Link
-import tbank.academy.domain.model.Link.{LinkAlreadyExist, LinkNotFound, UnexpectedLink}
-import tbank.academy.domain.model.http.{ApiErrorResponse, GetListLinksRequest, LinkResponse, ListLinksResponse}
-import tbank.academy.domain.repository.ChatRepository
 import tbank.academy.domain.repository.ChatRepository.{ChatAlreadyExist, ChatNotFound}
+import tbank.academy.domain.service.{ChatService, LinkService}
+import tbank.academy.domain.service.LinkService.{LinkAlreadyExist, LinkNotFound, UnexpectedLink}
+import tbank.academy.http._
 import tofu.logging.ServiceLogging.byUniversal
 import tofu.logging.{Logging, LoggingCompanion}
 import tofu.syntax.location.logging.LoggingInterpolator
@@ -25,7 +23,8 @@ trait ScrapperController[F[_]] extends Controller[F] {
 
 object ScrapperController extends LoggingCompanion[ScrapperController] {
   def make[F[_]: Async: Logging.Make](
-      chatService: ChatRepository[F]
+      chatService: ChatService[F],
+      linkService: LinkService[F]
   ): ScrapperController[F] =
     new ScrapperController[F] {
       override def tgChatPost: ServerEndpoint[Any, F] =
@@ -40,7 +39,8 @@ object ScrapperController extends LoggingCompanion[ScrapperController] {
       override val tgChatDelete: ServerEndpoint[Any, F] =
         ScrapperEndpoints.tgChatDelete
           .serverLogic { id =>
-            chatService.deleteChat(id)
+            chatService
+              .deleteChat(id)
               .attempt
               .flatMap(mapError)
           }
@@ -48,7 +48,7 @@ object ScrapperController extends LoggingCompanion[ScrapperController] {
       override val linksGet: ServerEndpoint[Any, F] =
         ScrapperEndpoints.linksGet
           .serverLogic { case (id, GetListLinksRequest(tag)) =>
-            chatService
+            linkService
               .getLinks(id, tag)
               .map(ListLinksResponse.apply(id, _))
               .attempt
@@ -58,9 +58,8 @@ object ScrapperController extends LoggingCompanion[ScrapperController] {
       override val linksPost: ServerEndpoint[Any, F] =
         ScrapperEndpoints.linksPost
           .serverLogic { case (tgChatId, request) =>
-            Link
-              .generate(tgChatId, request.tags, request.link)
-              .flatMap(chatService.addLink(tgChatId, _))
+            linkService
+              .addLink(tgChatId, request.link, request.tags)
               .map(LinkResponse.apply(tgChatId, _))
               .attempt
               .flatMap(mapError)
@@ -69,7 +68,8 @@ object ScrapperController extends LoggingCompanion[ScrapperController] {
       override val linksDelete: ServerEndpoint[Any, F] =
         ScrapperEndpoints.linksDelete
           .serverLogic { case (tgChatId, request) =>
-            chatService.deleteLink(tgChatId, request.link)
+            linkService
+              .deleteLink(tgChatId, request.link)
               .map(LinkResponse.apply(tgChatId, _))
               .attempt
               .flatMap(mapError)
@@ -110,11 +110,11 @@ object ScrapperController extends LoggingCompanion[ScrapperController] {
                 exceptionName = "ChatAlreadyExists",
                 exceptionMessage = s"Чат с id = $id уже существует"
               )
-            case LinkNotFound(url) => errorResponse(
+            case LinkNotFound => errorResponse(
                 description = "Ссылка не найдена",
                 code = StatusCode.NotFound,
                 exceptionName = "LinkNotFound",
-                exceptionMessage = s"Ссылка $url не найдена"
+                exceptionMessage = "Ссылка не найдена"
               )
             case LinkAlreadyExist(url) => errorResponse(
                 description = "Ссылка уже существует",

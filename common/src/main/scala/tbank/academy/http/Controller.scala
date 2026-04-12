@@ -1,4 +1,4 @@
-package tbank.academy.adapter.http.controller
+package tbank.academy.http
 
 import sttp.tapir.server.ServerEndpoint
 

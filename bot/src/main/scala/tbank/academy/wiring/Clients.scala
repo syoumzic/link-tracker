@@ -12,7 +12,7 @@ import tbank.academy.adapters.client.telegram.TgClient
 case class Clients[F[_]](tgClient: TgClient[F], scrapperClient: ScrapperClient[F])
 
 object Clients {
-  def make[F[_]: Async](implicit C: WithContext[F, AppConfig]): Resource[F, Clients[F]] =
+  def make[F[_]: Async](implicit context: WithContext[F, AppConfig]): Resource[F, Clients[F]] =
     for {
       http <- HttpClientFs2Backend.resource[F]()
       api  <- TgClient.make[F]

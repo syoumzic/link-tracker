@@ -10,22 +10,16 @@ import fs2.Stream
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import tbank.academy.domain.client.{ScrapperClient, TgClient}
-import tbank.academy.domain.model.Link.Tag
-import tbank.academy.domain.model.TgChat.Id
-import tbank.academy.domain.model.http.{LinkResponse, ListLinksResponse}
-import tbank.academy.domain.model.http
 import tbank.academy.domain.telegram.TgService
-import tofu.logging.{LoggedValue, Logging}
+import tbank.academy.http.{LinkResponse, ListLinksResponse}
+import tofu.logging.Logging
 
 import scala.collection.immutable.Queue
 import scala.concurrent.duration.DurationDouble
 
-class BotServiceSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks {
-  implicit val loggingIO: Logging[IO] = new Logging[IO] {
-    override def write(level: Logging.Level, message: String, values: LoggedValue*): IO[Unit] = IO.unit
-  }
+class BotServiceSpec extends AnyFlatSpec with Matchers {
+  implicit val loggingIO: Logging[IO] = Logging.empty[IO]
 
   implicit val loggingMake: Logging.Make[IO] = (_: String) => loggingIO
 
@@ -66,7 +60,7 @@ class BotServiceSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenProp
 
     override def pooling: Bot[IO] = Bot.fromStream(updatesMake(input))
 
-    override def updateLink(chat: Id, uri: String): IO[Unit] = outputRef.update(_.enqueue(uri))
+    override def updateLink(chat: Long, uri: String): IO[Unit] = outputRef.update(_.enqueue(uri))
   }
 
   def scrapperClientMake(
@@ -75,18 +69,21 @@ class BotServiceSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenProp
       deleteRef: Ref[IO, Queue[String]]
   ): ScrapperClient[IO] = new ScrapperClient[IO] {
 
-    override def tgChatPost(chatId: Id): IO[Unit] = IO.unit
+    override def tgChatPost(chatId: Long): IO[Unit] = IO.unit
 
-    override def tgChatDelete(chatId: Id): IO[Unit] = IO.unit
+    override def tgChatDelete(chatId: Long): IO[Unit] = IO.unit
 
-    override def linksGet(chatId: Id, tag: Option[Tag]): IO[http.ListLinksResponse] =
-      ListLinksResponse(getLinks.map(LinkResponse(0, _, Nil, Nil)), getLinks.size).pure[IO]
+    override def linksGet(chatId: Long, tag: Option[String]): IO[ListLinksResponse] =
+      ListLinksResponse(
+        getLinks.map(LinkResponse(0, _, tag.map(Set(_)).getOrElse(Set.empty), Set.empty)),
+        getLinks.size
+      ).pure[IO]
 
-    override def linksPost(chatId: Id, url: String, tags: List[Tag], filters: List[String]): IO[http.LinkResponse] =
+    override def linksPost(chatId: Long, url: String, tags: Set[String], filters: Set[String]): IO[LinkResponse] =
       updateRef.update(_.enqueue(url)) >> LinkResponse(0, url, tags, filters).pure[IO]
 
-    override def linksDelete(chatId: Id, url: String): IO[http.LinkResponse] =
-      deleteRef.update(_.enqueue(url)) >> LinkResponse(0, url, Nil, Nil).pure[IO]
+    override def linksDelete(chatId: Long, url: String): IO[LinkResponse] =
+      deleteRef.update(_.enqueue(url)) >> LinkResponse(0, url, Set.empty, Set.empty).pure[IO]
   }
 
   def commandTest(

@@ -8,11 +8,8 @@ object Dependencies {
   // tapir
   val tapirVersion = "1.13.12"
 
-  val tapirHttp4s     = "com.softwaremill.sttp.tapir" %% "tapir-http4s-server"     % tapirVersion
-  val tapirSwagger    = "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % tapirVersion
-  val tapirSttpClient = "com.softwaremill.sttp.tapir" %% "tapir-sttp-client"       % tapirVersion
-  val tapirNewtype    = "com.softwaremill.sttp.tapir" %% "tapir-newtype"           % tapirVersion
-  val tapirCirce      = "com.softwaremill.sttp.tapir" %% "tapir-json-circe"        % tapirVersion
+  val tapirHttp4s = "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion
+  val tapirCirce  = "com.softwaremill.sttp.tapir" %% "tapir-json-circe"    % tapirVersion
 
   // http4s
   val http4sVersion = "0.23.33"
@@ -23,8 +20,8 @@ object Dependencies {
   // sttp
   val sttpVersion = "4.0.19"
 
-  val sttpCore   = "com.softwaremill.sttp.client4" %% "core"           % sttpVersion
-  val sttpCats   = "com.softwaremill.sttp.client4" %% "cats"           % sttpVersion
+  val sttpCore = "com.softwaremill.sttp.client4" %% "core" % sttpVersion
+//  val sttpCats   = "com.softwaremill.sttp.client4" %% "cats"           % sttpVersion
   val sttpHttp4s = "com.softwaremill.sttp.client4" %% "http4s-backend" % sttpVersion
   val sttpCirce  = "com.softwaremill.sttp.client4" %% "circe"          % sttpVersion
 
@@ -37,11 +34,6 @@ object Dependencies {
   val pureConfig        = "com.github.pureconfig" %% "pureconfig"      % pureConfigVersion
   val pureConfigCore    = "com.github.pureconfig" %% "pureconfig-core" % pureConfigVersion
 
-  // neotype
-  val newtypeVersion = "0.4.4"
-
-  val newtype = "io.estatico" %% "newtype" % "0.4.4"
-
   val tofuVersion = "0.14.0"
 
   val tofuKernel            = "tf.tofu" %% "tofu-kernel"             % tofuVersion
@@ -52,49 +44,58 @@ object Dependencies {
   val tofuDerevoCore        = "tf.tofu" %% "derevo-core"             % tofuVersion
   val tofuDerevoCats        = "tf.tofu" %% "derevo-cats"             % tofuVersion
   val tofuDerevation        = "tf.tofu" %% "tofu-derivation"         % tofuVersion
-  val tofuOpticsCore        = "tf.tofu" %% "tofu-optics-core"        % tofuVersion
-  val tofuOpticsMacro       = "tf.tofu" %% "tofu-optics-macro"       % tofuVersion
-  val tofuOpticsInterop     = "tf.tofu" %% "tofu-optics-interop"     % tofuVersion
 
-  val canoe = "org.augustjune" %% "canoe" % "0.6.0"
+  val canoe = "org.augustjune"     %% "canoe" % "0.6.0"
+  val slick = "com.typesafe.slick" %% "slick" % "3.6.1"
 
-  val scalatest               = "org.scalatest"     %% "scalatest"                     % "3.2.19"   % Test
-  val scalatestCatsEffect     = "org.typelevel"     %% "cats-effect-testing-scalatest" % "1.7.0"    % Test
-  val scalatestPlusScalaCheck = "org.scalatestplus" %% "scalacheck-1-19"               % "3.2.19.0" % Test
-  val scalacheckMagnolify     = "com.spotify"       %% "magnolify-scalacheck"          % "0.9.4"    % Test
+  val doobieVersion  = "1.0.0-RC12"
+  val doobie         = "org.tpolecat" %% "doobie-core"     % doobieVersion
+  val doobiePostgres = "org.tpolecat" %% "doobie-postgres" % doobieVersion
 
-  val weaver     = "org.typelevel"  %% "weaver-cats"            % "0.12.0" % Test
-  val mockServer = "org.mock-server" % "mockserver-client-java" % "5.15.0"
+  val psql    = "org.postgresql" % "postgresql"  % "42.7.10"
+  val chimney = "io.scalaland"  %% "chimney"     % "1.9.0"
+  val flyway  = "org.flywaydb"   % "flyway-core" % "9.22.0"
+
+  val testContainersVersion = "0.44.1"
+
+  val testContainersScalatest = "com.dimafeng" %% "testcontainers-scala-scalatest"  % testContainersVersion
+  val testContainersPostgress = "com.dimafeng" %% "testcontainers-scala-postgresql" % testContainersVersion
+
+  val scalatest               = "org.scalatest"     %% "scalatest"            % "3.2.19"   % Test
+  val scalatestPlusScalaCheck = "org.scalatestplus" %% "scalacheck-1-19"      % "3.2.19.0" % Test
+  val scalacheckMagnolify     = "com.spotify"       %% "magnolify-scalacheck" % "0.9.4"    % Test
 
   val allDeps: Seq[ModuleID] = Seq(
     catsCore,
     catsEffect,
     tapirHttp4s,
-    tapirSwagger,
-    tapirSttpClient,
-    tapirNewtype,
     tapirCirce,
     http4sServer,
     http4sDsl,
     sttpCore,
-    sttpCats,
     sttpHttp4s,
     sttpCirce,
     logback,
     pureConfig,
     pureConfigCore,
-    newtype,
     tofuKernel,
-    tofuCoreCe3,
     tofuLogging,
+    tofuCoreCe3,
     tofuLoggingDerivation,
+    tofuDerevoCats,
     tofuDerevation,
     canoe,
     scalatest,
-    scalatestCatsEffect,
+    doobie,
+    doobiePostgres,
+    psql,
+    chimney,
+    flyway,
+    testContainersScalatest,
+    testContainersPostgress,
+    slick,
     scalatestPlusScalaCheck,
-    weaver,
-    mockServer,
+    scalacheckMagnolify,
     compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.4" cross CrossVersion.full),
   )
 }

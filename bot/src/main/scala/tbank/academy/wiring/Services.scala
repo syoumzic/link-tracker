@@ -13,8 +13,8 @@ import fs2.io.net.Network
 case class Services[F[_]](botService: TgService[F], server: Server)
 
 object Services {
-  def make[F[_]: Async: Network: Logging.Make](clients: Clients[F], controllers: Controllers[F])(implicit
-      C: WithContext[F, AppConfig]
+  def make[F[_]: Async: Network: Logging.Make](clients: Clients[F], controllers: Controllers[F])(
+      implicit context: WithContext[F, AppConfig]
   ): Resource[F, Services[F]] =
     (
       TgService.pooling[F](clients.tgClient, clients.scrapperClient),

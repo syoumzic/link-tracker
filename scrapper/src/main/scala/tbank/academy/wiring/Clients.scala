@@ -15,7 +15,7 @@ case class Clients[F[_]](
 )
 
 object Clients {
-  def make[F[_]: Async: Logging.Make](implicit C: WithContext[F, AppConfig]): Resource[F, Clients[F]] =
+  def make[F[_]: Async: Logging.Make](implicit context: WithContext[F, AppConfig]): Resource[F, Clients[F]] =
     HttpClientFs2Backend
       .resource[F]()
       .map(client =>

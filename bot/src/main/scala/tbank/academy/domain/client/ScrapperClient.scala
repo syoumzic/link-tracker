@@ -1,12 +1,11 @@
 package tbank.academy.domain.client
 
-import tbank.academy.domain.model.http.{LinkResponse, ListLinksResponse}
-import tbank.academy.domain.model.{Link, TgChat}
+import tbank.academy.http._
 
 trait ScrapperClient[F[_]] {
-  def tgChatPost(chatId: TgChat.Id): F[Unit]
-  def tgChatDelete(chatId: TgChat.Id): F[Unit]
-  def linksGet(chatId: TgChat.Id, tag: Option[Link.Tag]): F[ListLinksResponse]
-  def linksPost(chatId: TgChat.Id, url: String, tags: List[Link.Tag], filters: List[String]): F[LinkResponse]
-  def linksDelete(chatId: TgChat.Id, url: String): F[LinkResponse]
+  def tgChatPost(chatId: Long): F[Unit]
+  def tgChatDelete(chatId: Long): F[Unit]
+  def linksGet(chatId: Long, tag: Option[String]): F[ListLinksResponse]
+  def linksPost(chatId: Long, url: String, tags: Set[String], filters: Set[String]): F[LinkResponse]
+  def linksDelete(chatId: Long, url: String): F[LinkResponse]
 }

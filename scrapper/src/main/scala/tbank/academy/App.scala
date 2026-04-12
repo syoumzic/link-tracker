@@ -1,9 +1,10 @@
 package tbank.academy
 
 import cats.data.ReaderT
-import cats.effect.implicits.effectResourceOps
 import cats.effect.{IO, IOApp}
+import tbank.academy.adapter.Server
 import tbank.academy.config.AppConfig
+import tbank.academy.domain.service.Monitor
 import tbank.academy.wiring.{Clients, Controllers, Repositories, Services}
 import tofu.logging.Logging
 
@@ -18,9 +19,17 @@ object App extends IOApp.Simple {
       .flatMap(application.run)
 
   private def application: AppT[Nothing] = (for {
-    repositories <- Repositories.make[AppT].toResource
+    repositories <- Repositories.make[AppT]
     clients      <- Clients.make[AppT]
-    controllers = Controllers.make[AppT](repositories)
-    _ <- Services.make[AppT](repositories, clients, controllers)
+    services     <- Services.make[AppT](repositories)
+    controllers  <- Controllers.make[AppT](services)
+
+    _ <- Server.make[AppT](controllers.scrapperController)
+    _ <- Monitor.pooling[AppT](
+      repositories.linkRepository,
+      clients.botClient,
+      clients.githubClient,
+      clients.stackoverflowClient
+    )
   } yield ()).useForever
 }
