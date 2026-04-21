@@ -32,7 +32,7 @@ mr-build:
   tags:
     - dind
   services:
-    - name: docker:dind
+    - name: docker:29.0.1-dind
       alias: docker
   before_script:
     - apk add --no-cache docker-cli
