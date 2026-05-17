@@ -4,8 +4,11 @@ import cats.effect._
 import cats.effect.implicits.effectResourceOps
 import sttp.client4.httpclient.fs2.HttpClientFs2Backend
 import tbank.academy.adapter.client.http.BotClient
+import tbank.academy.adapter.client.kafka.KafkaBotClient
+import tbank.academy.adapter.kafka.KafkaProducerService
 import tbank.academy.config.AppConfig
 import tbank.academy.domain.client._
+import tbank.academy.domain.client.BotClient
 import tofu.WithContext
 
 case class Clients[F[_]](
@@ -27,7 +30,15 @@ object Clients {
       githubBatchClient        <- GithubBatchClient.make(githubClient).toResource
       stackoverflowBatchClient <- StackoverflowBatchClient.make(stackoverflowClient).toResource
 
-      botClient <- BotClient.make(client).toResource
+      kafkaEnabled <- context.ask(_.kafka.enabled).toResource
+      botClient    <- if (kafkaEnabled) {
+        for {
+          kafkaProducer <- KafkaProducerService.make[F]
+          kafkaBotClient = KafkaBotClient.make[F](kafkaProducer)
+        } yield kafkaBotClient
+      } else {
+        BotClient.make(client).toResource
+      }
     } yield Clients(botClient, githubBatchClient, stackoverflowBatchClient)
   }
 }

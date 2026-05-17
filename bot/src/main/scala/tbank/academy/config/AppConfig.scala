@@ -9,7 +9,12 @@ import tbank.academy.config.AppConfig.{BotConfig, ScrapperConfig, ServerConfig}
 import pureconfig.generic.auto._
 import sttp.model.Uri
 
-case class AppConfig(bot: BotConfig, server: ServerConfig, scrapper: ScrapperConfig)
+case class AppConfig(
+    bot: BotConfig,
+    server: ServerConfig,
+    scrapper: ScrapperConfig,
+    kafka: KafkaConfig
+)
 
 object AppConfig {
   case class BotConfig(token: String)

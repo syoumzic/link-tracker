@@ -16,12 +16,13 @@ case class AppConfig(
     doobie: DoobieConfig,
     clients: ClientsConfig,
     analyzer: AnalyzerConfig,
-    batchClient: BatchClientConfig
+    batchClient: BatchClientConfig,
+    kafka: KafkaConfig
 )
 
 case class BatchClientConfig(batchSize: Int)
 
-case class AnalyzerConfig(maxConcurrent: Option[Int])
+case class AnalyzerConfig(maxConcurrent: Option[Int], delayMs: Long)
 
 case class DoobieConfig(driver: String, user: String, url: String, password: String)
 

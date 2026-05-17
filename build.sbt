@@ -22,7 +22,7 @@ val bot      = project.dependsOn(common).settings(libraryDependencies ++= Depend
 val scrapper = project.dependsOn(common).settings(libraryDependencies ++= Dependencies.allDeps)
 val ai       = project.dependsOn(common).settings(name := "ai-agent", libraryDependencies ++= Dependencies.allDeps)
 val test     =
-  project.dependsOn(scrapper).settings(
+  project.dependsOn(scrapper, bot).settings(
     name := "integration-test",
     libraryDependencies ++= Dependencies.allDeps,
   )

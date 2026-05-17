@@ -21,7 +21,7 @@ object GithubBatchClient {
     def events(baseUrl: String): F[List[GithubRequestItem]] =
       batch(batchSize) { page =>
         client.execute[List[GithubRequestItem]](
-          s"$baseUrl?page=$page&pagesize=$batchSize&site=stackoverflow.com, page, batchSize"
+          s"$baseUrl?page=$page&pagesize=$batchSize&site=stackoverflow.com"
         )
       }
   }
