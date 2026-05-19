@@ -4,7 +4,7 @@ import cats.data.ReaderT
 import cats.effect.{IO, IOApp}
 import tbank.academy.adapter.Server
 import tbank.academy.config.AppConfig
-import tbank.academy.domain.service.Monitor
+import tbank.academy.domain.service.{GithubAnalyzer, StackoverflowAnalyzer}
 import tbank.academy.wiring.{Clients, Controllers, Repositories, Services}
 import tofu.logging.Logging
 
@@ -23,13 +23,8 @@ object App extends IOApp.Simple {
     clients      <- Clients.make[AppT]
     services     <- Services.make[AppT](repositories)
     controllers  <- Controllers.make[AppT](services)
-
-    _ <- Server.make[AppT](controllers.scrapperController)
-    _ <- Monitor.pooling[AppT](
-      repositories.linkRepository,
-      clients.botClient,
-      clients.githubClient,
-      clients.stackoverflowClient
-    )
+    _            <- Server.make[AppT](controllers.scrapperController)
+    _            <- GithubAnalyzer.make[AppT](clients.githubClient, clients.botClient, repositories.linkRepository)
+    _ <- StackoverflowAnalyzer.make[AppT](clients.stackoverflowClient, clients.botClient, repositories.linkRepository)
   } yield ()).useForever
 }

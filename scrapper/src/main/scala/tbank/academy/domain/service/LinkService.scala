@@ -22,8 +22,8 @@ object LinkService {
 
   case class UnexpectedLink(uri: String) extends Error
 
-  private val githubUrl: Regex        = """https://api.github\.com/repos/(\w+)/(\w+)""".r
-  private val stackoverflowUrl: Regex = """https://api.stackexchange\.com/questions/(\d+)/.*""".r
+  private val githubUrl: Regex        = """https://github.com/(\w+)/(\w+)""".r
+  private val stackoverflowUrl: Regex = """https://stackoverflow.com/questions/(\d+).*""".r
 
   def make[F[_]: Async](linkRepository: LinkRepository[F]): LinkService[F] = new LinkService[F] {
     override def getLinks(chatId: Long, tag: Option[String]): F[List[Link]] = tag match {
@@ -42,18 +42,20 @@ object LinkService {
         case githubUrl(user, repo) =>
           Right(Link(
             url,
-            apiUrl = s"https://api.github.com/repos/$user/$repo",
+            apiUrl = s"https://api.github.com/repos/$user/$repo/events",
             tags = tags,
             chatIds = Set(chatId),
-            site = Github
+            site = Github,
+            processedCount = 0L
           ))
 
         case stackoverflowUrl(questionId) => Right(Link(
             url,
-            apiUrl = s"https://api.stackexchange.com/2.3/questions/$questionId?site=stackoverflow",
+            apiUrl = s"https://api.stackexchange.com/2.0/questions/$questionId",
             tags = tags,
             chatIds = Set(chatId),
-            site = Stackoverflow
+            site = Stackoverflow,
+            processedCount = 0L
           ))
 
         case _ => Left(UnexpectedLink(url))

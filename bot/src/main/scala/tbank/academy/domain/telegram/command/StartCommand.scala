@@ -17,7 +17,7 @@ object StartCommand extends LoggingCompanion[StartCommand] {
       chat <- Scenario.expect(privateChat(name))
       _    <- Scenario.eval(info"в чате ${chat.id} воспользовались командой /start")
       _    <- Scenario.eval(client.sendMessage(
-        chat,
+        chat.id,
         "Добро пожаловать! Чтобы ознакомиться с тем, что я умею введите /help"
       ))
     } yield ()

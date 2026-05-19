@@ -17,15 +17,16 @@ object Transformer {
     }
 
   implicit val linkRead: Read[Link] =
-    Read[(String, String, Site, Option[List[String]], Option[List[Long]], Option[Instant])].map {
-      case (url, apiUrl, site, tags, chatIds, lastUpdate) =>
+    Read[(String, String, Site, Option[List[String]], Option[List[Long]], Option[Instant], Long)].map {
+      case (url, apiUrl, site, tags, chatIds, lastUpdate, processedCount) =>
         Link(
           url = url,
           apiUrl = apiUrl,
           site = site,
           tags = tags.map(_.toSet).getOrElse(Set.empty[String]),
           chatIds = chatIds.map(_.toSet).getOrElse(Set.empty[Long]),
-          lastUpdate = lastUpdate
+          lastUpdate = lastUpdate,
+          processedCount = processedCount
         )
     }
 }

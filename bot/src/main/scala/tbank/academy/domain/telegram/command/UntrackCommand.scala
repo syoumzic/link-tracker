@@ -19,7 +19,7 @@ object UntrackCommand {
       def scenario: Scenario[F, Unit] = for {
         chat <- Scenario.expect(privateChat(name))
         _    <- Scenario.eval(client.sendMessage(
-          chat,
+          chat.id,
           "Введите ссылку которую хотите перестать отслеживать"
         ))
         url <- Scenario.expect(text)
@@ -27,10 +27,10 @@ object UntrackCommand {
           scrapperClient
             .linksDelete(chat.id, url)
             .flatMap { _ =>
-              client.sendMessage(chat, "Ссылка успешно удалена")
+              client.sendMessage(chat.id, "Ссылка успешно удалена")
             }
             .recoverWith {
-              case LinkNotFound(uri) => client.sendMessage(chat, s"Похоже ссылка $uri уже не отслеживалась")
+              case LinkNotFound(uri) => client.sendMessage(chat.id, s"Похоже ссылка $uri уже не отслеживалась")
             }
         )
       } yield ()

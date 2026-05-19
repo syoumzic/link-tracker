@@ -1,0 +1,31 @@
+{
+  "items": [
+    {
+      "tags": [
+        "excel",
+        "vba",
+        "excel-2007"
+      ],
+      "owner": {
+        "reputation": 23,
+        "user_id": 10213247,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/9589da4b535ed1fa0de64dc95d6c5581?s=256&d=identicon&r=PG&f=y&so-version=2",
+        "display_name": "Steve Roberts",
+        "link": "https://stackoverflow.com/users/10213247/steve-roberts"
+      },
+      "is_answered": true,
+      "view_count": 25,
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1777393989,
+      "creation_date": 1777392544,
+      "question_id": 79933183,
+      "link": "https://stackoverflow.com/questions/79933183/how-do-i-determine-the-state-of-a-vba-workbook-before-attemting-to-close-it-exc",
+      "title": "How do I determine the state of a VBA workbook before attemting to close it (Excel 2007)?"
+    }
+  ],
+  "has_more": false,
+  "quota_max": 300,
+  "quota_remaining": 275
+}

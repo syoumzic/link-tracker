@@ -23,18 +23,18 @@ object ListCommand {
 
       def scenario: Scenario[F, Unit] = for {
         chat <- Scenario.expect(privateChat(name))
-        _    <- Scenario.eval(client.sendMessage(chat, "Для уточнения можете ввести интересующий вас тег"))
+        _    <- Scenario.eval(client.sendMessage(chat.id, "Для уточнения можете ввести интересующий вас тег"))
         tag  <- Scenario.expect(tagOption)
         _    <- Scenario.eval(
           scrapperClient
             .linksGet(chat.id, tag)
             .flatMap {
-              case ListLinksResponse(_, size) if size == 0 => client.sendMessage(chat, "Нет ссылок")
+              case ListLinksResponse(_, size) if size == 0 => client.sendMessage(chat.id, "Нет ссылок")
               case ListLinksResponse(links, _)             =>
-                client.sendMessage(chat, s"Ссылки: ${links.map(_.uri).mkString("\n")}")
+                client.sendMessage(chat.id, s"Ссылки: ${links.map(_.uri).mkString("\n")}")
             }
             .recoverWith {
-              case _: ChatNotFound => client.sendMessage(chat, "Чат не зарегистирован, введите /start")
+              case _: ChatNotFound => client.sendMessage(chat.id, "Чат не зарегистирован, введите /start")
             }
         )
       } yield ()

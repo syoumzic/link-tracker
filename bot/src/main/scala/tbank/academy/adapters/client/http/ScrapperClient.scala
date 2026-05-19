@@ -3,17 +3,16 @@ package tbank.academy.adapters.client.http
 import cats.effect.Async
 import cats.implicits._
 import sttp.capabilities.fs2.Fs2Streams
-import sttp.client4.circe.{asJson, asJsonEither}
-import sttp.client4.{ResponseException, StreamBackend, basicRequest}
+import sttp.client4.{StreamBackend, basicRequest}
 import sttp.model.Uri
 import tbank.academy.config.AppConfig
 import tbank.academy.domain.client.ScrapperClient
 import tofu.WithContext
-import io.circe.generic.auto._
-import sttp.client4.ResponseException.{DeserializationException, UnexpectedStatusCode}
+import sttp.client4.tethysJson.{asJson, asJsonEitherOrFail}
 import tbank.academy.DomainError
-
 import tbank.academy.http._
+import tethys.jackson.{jacksonTokenIteratorProducer, jacksonTokenWriterProducer}
+import tbank.academy.Predef._
 
 object ScrapperClient {
   trait Error extends DomainError {
@@ -43,7 +42,7 @@ object ScrapperClient {
             .post(url.addPath("links"))
             .header("Tg-Chat-Id", chatId.toString)
             .body(asJson(AddLinkRequest(linkUrl, tags, filters)))
-            .response(asJsonEither[ApiErrorResponse, LinkResponse])
+            .response(asJsonEitherOrFail[ApiErrorResponse, LinkResponse])
             .send(http)
             .map {
               _.body.leftMap(recoverError)
@@ -55,7 +54,7 @@ object ScrapperClient {
         url.flatMap { url =>
           basicRequest
             .post(url.addPath("tg-chat").addParam("id", chatId.toString))
-            .response(asJsonEither[ApiErrorResponse, Unit])
+            .response(asJsonEitherOrFail[ApiErrorResponse, Unit])
             .send(http)
             .map {
               _.body.leftMap(recoverError)
@@ -67,7 +66,7 @@ object ScrapperClient {
         url.flatMap { url =>
           basicRequest
             .delete(url.addPath("tg-chat").addParam("id", chatId.toString))
-            .response(asJsonEither[ApiErrorResponse, Unit])
+            .response(asJsonEitherOrFail[ApiErrorResponse, Unit])
             .send(http)
             .map {
               _.body.leftMap(recoverError)
@@ -81,7 +80,7 @@ object ScrapperClient {
           basicRequest
             .get(url.addPath("links"))
             .header("Tg-Chat-Id", chatId.toString)
-            .response(asJsonEither[ApiErrorResponse, ListLinksResponse])
+            .response(asJsonEitherOrFail[ApiErrorResponse, ListLinksResponse])
             .body(asJson(GetListLinksRequest(tag)))
             .send(http)
             .map {
@@ -96,7 +95,7 @@ object ScrapperClient {
             .delete(url.addPath("links"))
             .header("Tg-Chat-Id", chatId.toString)
             .body(asJson(RemoveLinkRequest(link)))
-            .response(asJsonEither[ApiErrorResponse, LinkResponse])
+            .response(asJsonEitherOrFail[ApiErrorResponse, LinkResponse])
             .send(http)
             .map {
               _.body.leftMap(recoverError)
@@ -106,19 +105,16 @@ object ScrapperClient {
 
       private def url: F[Uri] = context.ask(_.scrapper.url)
 
-      private def recoverError(errorResponse: ResponseException[ApiErrorResponse]): Error = errorResponse match {
-        case UnexpectedStatusCode(body, response) => body match {
-            case ApiErrorResponse(description, code, exceptionName, exceptionMessage, stacktrace) =>
-              exceptionName match {
-                case "LinkAlreadyExist" => LinkAlreadyExist(description)
-                case "LinkNotFound"     => LinkNotFound(description)
-                case "ChatAlreadyExist" => ChatAlreadyExist(description)
-                case "ChatNotFound"     => ChatNotFound(description)
-                case "UnexpectedLink"   => UnexpectedLink(description)
-                case "Conflict"         => Conflict(description)
-              }
+      private def recoverError(errorResponse: ApiErrorResponse): Error = errorResponse match {
+        case ApiErrorResponse(description, code, exceptionName, exceptionMessage, stacktrace) =>
+          exceptionName match {
+            case "LinkAlreadyExist" => LinkAlreadyExist(description)
+            case "LinkNotFound"     => LinkNotFound(description)
+            case "ChatAlreadyExist" => ChatAlreadyExist(description)
+            case "ChatNotFound"     => ChatNotFound(description)
+            case "UnexpectedLink"   => UnexpectedLink(description)
+            case "Conflict"         => Conflict(description)
           }
-        case DeserializationException(body, cause, response) => BadRequest(body)
       }
     }
   }

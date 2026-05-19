@@ -12,6 +12,9 @@ ThisBuild / semanticdbEnabled                             := true
 ThisBuild / semanticdbVersion                             := "4.15.2"
 ThisBuild / scalacOptions ++= List(
   "-Ymacro-annotations",
+  "-Wconf:msg=Implicit resolves to enclosing:s",
+  "-Wconf:msg=unused value of type tethys.commons.Token:s",
+  "-Wconf:cat=unused-params:s"
 )
 
 val common   = project.settings(libraryDependencies ++= Dependencies.allDeps)

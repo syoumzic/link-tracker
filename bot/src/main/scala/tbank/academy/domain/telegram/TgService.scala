@@ -17,8 +17,22 @@ import tofu.syntax.logging._
 import cats.effect.implicits._
 import cats.implicits._
 
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 trait TgService[F[_]] {
   def run: F[Unit]
+  def updatePullRequest(chat: Long, url: String, title: String, username: String, uptime: ZonedDateTime): F[Unit]
+  def updateIssue(
+      chat: Long,
+      url: String,
+      title: String,
+      username: String,
+      uptime: ZonedDateTime,
+      description: String
+  ): F[Unit]
+  def updateAnswer(chat: Long, question: String, username: String, uptime: ZonedDateTime, description: String): F[Unit]
+  def updateComment(chat: Long, question: String, username: String, uptime: ZonedDateTime, description: String): F[Unit]
 }
 
 object TgService extends LoggingCompanion[TgService] {
@@ -42,6 +56,8 @@ object TgService extends LoggingCompanion[TgService] {
       ListCommand.make[F](client, scrapperClient)
     )
 
+    private val timeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
+
     val handlers: List[Handler[F]] = NotFoundHandler.make[F](client, commands.map(_.name)) :: commands
 
     override def run: F[Unit] = {
@@ -52,6 +68,96 @@ object TgService extends LoggingCompanion[TgService] {
         .onFinalize(info"бот своё отработал")
         .compile
         .drain
+    }
+
+    override def updatePullRequest(
+        chat: Long,
+        url: String,
+        title: String,
+        username: String,
+        uptime: ZonedDateTime
+    ): F[Unit] = {
+      val msg =
+        s"""
+           |🚀 <b>Pull Request обновлен</b>
+           |
+           |<b>Название:</b> $title
+           |<b>Автор:</b> $username
+           |<b>Время:</b> ${uptime.format(timeFormatter)}
+           |
+           |<a href="$url">Посмотреть изменения</a>
+    """.stripMargin
+
+      client.sendMessage(chat, msg)
+    }
+
+    override def updateIssue(
+        chat: Long,
+        url: String,
+        title: String,
+        username: String,
+        uptime: ZonedDateTime,
+        description: String
+    ): F[Unit] = {
+      val msg =
+        s"""
+           |📌 <b>Issue обновлена</b>
+           |
+           |<b>Название:</b> $title
+           |<b>Автор:</b> $username
+           |<b>Время:</b> ${uptime.format(timeFormatter)}
+           |
+           |<b>Описание:</b>
+           |${description.take(200)}${if (description.length > 200) "..." else ""}
+           |
+           |<a href="$url">Открыть Issue</a>
+    """.stripMargin
+
+      client.sendMessage(chat, msg)
+    }
+
+    override def updateAnswer(
+        chat: Long,
+        question: String,
+        username: String,
+        uptime: ZonedDateTime,
+        description: String
+    ): F[Unit] = {
+      val msg =
+        s"""
+           |✅ <b>Дан новый ответ</b>
+           |
+           |<b>Вопрос:</b> $question
+           |<b>Ответил:</b> $username
+           |<b>Время:</b> ${uptime.format(timeFormatter)}
+           |
+           |<b>Текст ответа:</b>
+           |$description
+    """.stripMargin
+
+      client.sendMessage(chat, msg)
+    }
+
+    override def updateComment(
+        chat: Long,
+        question: String,
+        username: String,
+        uptime: ZonedDateTime,
+        description: String
+    ): F[Unit] = {
+      val msg =
+        s"""
+           |💬 <b>Новый комментарий</b>
+           |
+           |<b>К вопросу:</b> $question
+           |<b>Автор:</b> $username
+           |<b>Время:</b> ${uptime.format(timeFormatter)}
+           |
+           |<b>Комментарий:</b>
+           |$description
+    """.stripMargin
+
+      client.sendMessage(chat, msg)
     }
   }
 }

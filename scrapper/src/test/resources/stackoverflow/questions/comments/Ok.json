@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "owner": {
+        "reputation": 169780,
+        "user_id": 478884,
+        "user_type": "registered",
+        "profile_image": "https://i.sstatic.net/rLckc.jpg?s=256",
+        "display_name": "Tim Williams",
+        "link": "https://stackoverflow.com/users/478884/tim-williams"
+      },
+      "edited": false,
+      "score": 0,
+      "creation_date": 1777393333,
+      "post_id": 79933183,
+      "comment_id": 141048692,
+      "body": "2"
+    }
+  ],
+  "has_more": false,
+  "quota_max": 300,
+  "quota_remaining": 278,
+  "total": 1
+}

@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "owner": {
+        "reputation": 169780,
+        "user_id": 478884,
+        "user_type": "registered",
+        "profile_image": "https://i.sstatic.net/rLckc.jpg?s=256",
+        "display_name": "Tim Williams",
+        "link": "https://stackoverflow.com/users/478884/tim-williams"
+      },
+      "is_accepted": false,
+      "score": 1,
+      "last_activity_date": 1777393989,
+      "last_edit_date": 1777393989,
+      "creation_date": 1777393667,
+      "answer_id": 79933197,
+      "question_id": 79933183,
+      "body": "1"
+    }
+  ],
+  "has_more": false,
+  "quota_max": 300,
+  "quota_remaining": 277,
+  "total": 1
+}
