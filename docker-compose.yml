@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  # Kafka Broker 1 (Controller + Broker)
+  kafka-broker-1:
+    image: apache/kafka:4.0.0
+    container_name: kafka-broker-1
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KRAFT_NODE_ID: 1
+      KRAFT_CONTROLLER_QUORUM_VOTERS: 1@kafka-broker-1:9094,2@kafka-broker-2:9094,3@kafka-broker-3:9094
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9094,EXTERNAL://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-broker-1:9092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-broker-1:9094,2@kafka-broker-2:9094,3@kafka-broker-3:9094
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_LOG_DIRS: /var/kafka/data
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes:
+      - kafka-data-1:/var/kafka/data
+    networks:
+      - kafka-network
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka Broker 2 (Controller + Broker)
+  kafka-broker-2:
+    image: apache/kafka:4.0.0
+    container_name: kafka-broker-2
+    ports:
+      - "9094:9094"
+    environment:
+      KRAFT_NODE_ID: 2
+      KRAFT_CONTROLLER_QUORUM_VOTERS: 1@kafka-broker-1:9094,2@kafka-broker-2:9094,3@kafka-broker-3:9094
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9095,CONTROLLER://0.0.0.0:9094,EXTERNAL://0.0.0.0:9096
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-broker-2:9095,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-broker-1:9094,2@kafka-broker-2:9094,3@kafka-broker-3:9094
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_LOG_DIRS: /var/kafka/data
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes:
+      - kafka-data-2:/var/kafka/data
+    networks:
+      - kafka-network
+    depends_on:
+      kafka-broker-1:
+        condition: service_healthy
+
+  # Kafka Broker 3 (Controller + Broker)
+  kafka-broker-3:
+    image: apache/kafka:4.0.0
+    container_name: kafka-broker-3
+    ports:
+      - "9096:9096"
+    environment:
+      KRAFT_NODE_ID: 3
+      KRAFT_CONTROLLER_QUORUM_VOTERS: 1@kafka-broker-1:9094,2@kafka-broker-2:9094,3@kafka-broker-3:9094
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9097,CONTROLLER://0.0.0.0:9094,EXTERNAL://0.0.0.0:9096
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-broker-3:9097,EXTERNAL://localhost:9096
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-broker-1:9094,2@kafka-broker-2:9094,3@kafka-broker-3:9094
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_LOG_DIRS: /var/kafka/data
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes:
+      - kafka-data-3:/var/kafka/data
+    networks:
+      - kafka-network
+    depends_on:
+      kafka-broker-1:
+        condition: service_healthy
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 11111
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - kafka-network
+
+networks:
+  kafka-network:
+    driver: bridge
+
+volumes:
+  kafka-data-1:
+  kafka-data-2:
+  kafka-data-3:
+  postgres-data:

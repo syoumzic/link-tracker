@@ -63,13 +63,18 @@ object Dependencies {
   val scalacheckMagnolify     = "com.spotify"       %% "magnolify-scalacheck" % "0.9.4"    % Test
 
   val fs2Version = "3.13.0"
-  val fs2        = "co.fs2" %% "fs2-core" % fs2Version
-  val fs2IO      = "co.fs2" %% "fs2-io"   % fs2Version
+  val fs2        = "co.fs2"          %% "fs2-core"  % fs2Version
+  val fs2IO      = "co.fs2"          %% "fs2-io"    % fs2Version
+  val fs2Kafka   = "com.github.fd4s" %% "fs2-kafka" % "3.6.0"
+
+  val kafkaClients = "org.apache.kafka" % "kafka-clients" % "4.0.0"
 
   val scalamockVersion = "7.5.5"
 
   val scalamock     = "org.scalamock" %% "scalamock"             % scalamockVersion % Test
   val scalamockCats = "org.scalamock" %% "scalamock-cats-effect" % scalamockVersion % Test
+
+  val testContainersKafka = "com.dimafeng" %% "testcontainers-scala-kafka" % testContainersVersion
 
   val allDeps: Seq[ModuleID] = Seq(
     catsCore,
@@ -104,11 +109,14 @@ object Dependencies {
     flyway,
     testContainersScalatest,
     testContainersPostgress,
+    testContainersKafka,
     slick,
     scalatestPlusScalaCheck,
     scalacheckMagnolify,
     fs2,
     fs2IO,
+    fs2Kafka,
+    kafkaClients,
     scalamock,
     scalamockCats,
     compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.4" cross CrossVersion.full),

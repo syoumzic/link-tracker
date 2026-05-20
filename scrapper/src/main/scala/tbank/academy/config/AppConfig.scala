@@ -16,7 +16,8 @@ case class AppConfig(
     doobie: DoobieConfig,
     clients: ClientsConfig,
     analyzer: AnalyzerConfig,
-    batchClient: BatchClientConfig
+    batchClient: BatchClientConfig,
+    kafka: KafkaConfig
 )
 
 case class BatchClientConfig(batchSize: Int)
